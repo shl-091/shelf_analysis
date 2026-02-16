@@ -3,28 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60; // Allow 60 seconds for processing
 
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const SITE_NAME = "Shelf Analysis App";
+
 export async function POST(req: NextRequest) {
   try {
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-    console.log("Environment Debug:");
-    console.log("Available Keys:", Object.keys(process.env));
-    console.log("OPENROUTER_API_KEY value type:", typeof OPENROUTER_API_KEY);
-    console.log("OPENROUTER_API_KEY length:", OPENROUTER_API_KEY?.length);
-
     const { images, mode, model } = await req.json();
-
-    if (!images || !Array.isArray(images) || images.length === 0) {
-      return NextResponse.json(
-        { error: "No images provided" },
-        { status: 400 }
-      );
-    }
-
     if (!OPENROUTER_API_KEY) {
-      console.error("Critical: OPENROUTER_API_KEY is not set in process.env");
-      const availableKeys = Object.keys(process.env).join(", ");
       return NextResponse.json(
-        { error: `Server Configuration Error: OpenRouter API Key is missing. Available Env Vars: [${availableKeys}]` },
+        { error: "OpenRouter API Key not configured" },
         { status: 500 }
       );
     }
