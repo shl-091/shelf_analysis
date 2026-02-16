@@ -3,12 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60; // Allow 60 seconds for processing
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-const SITE_NAME = "Shelf Analysis App";
-
 export async function POST(req: NextRequest) {
   try {
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    console.log("API Key Check:", { hasKey: !!OPENROUTER_API_KEY, length: OPENROUTER_API_KEY?.length });
+
     const { images, mode, model } = await req.json();
 
     if (!images || !Array.isArray(images) || images.length === 0) {
@@ -19,11 +18,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (!OPENROUTER_API_KEY) {
+      console.error("Critical: OPENROUTER_API_KEY is not set in process.env");
       return NextResponse.json(
-        { error: "OpenRouter API Key not configured" },
+        { error: "Server Configuration Error: OpenRouter API Key is missing. Please check Vercel Environment Variables." },
         { status: 500 }
       );
     }
+
+    const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const SITE_NAME = "Shelf Analysis App";
 
     let systemPrompt = "";
     let userPrompt = "";
@@ -49,7 +52,7 @@ export async function POST(req: NextRequest) {
       
       IMPORTANT: The 'box_2d' coordinates should be [ymin, xmin, ymax, xmax] normalized to 1000x1000.
       Ensure the JSON is valid and parseable. Do not include markdown formatting like \`\`\`json.`;
-      
+
       userPrompt = "Analyze these shelf images. Detect all products and provide market analysis.";
     } else if (mode === "ingredients") {
       systemPrompt = `You are an expert product ingredient analyzer. Analyze the product back/ingredient images.
@@ -69,7 +72,7 @@ export async function POST(req: NextRequest) {
       }
       
       Ensure the JSON is valid and parseable. Do not include markdown formatting like \`\`\`json.`;
-      
+
       userPrompt = "Analyze the ingredients and product details from these images.";
     } else {
       return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
@@ -108,7 +111,7 @@ export async function POST(req: NextRequest) {
             content: content,
           },
         ],
-        response_format: { type: "json_object" }, 
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -132,13 +135,13 @@ export async function POST(req: NextRequest) {
       // Fallback: try to strip markdown code blocks if present
       const cleanContent = contentString.replace(/```json\n?|\n?```/g, "");
       try {
-          const validJson = JSON.parse(cleanContent);
-          return NextResponse.json(validJson);
+        const validJson = JSON.parse(cleanContent);
+        return NextResponse.json(validJson);
       } catch (e2) {
-          return NextResponse.json(
-            { error: "Failed to parse model response as JSON", raw: contentString },
-            { status: 500 }
-          );
+        return NextResponse.json(
+          { error: "Failed to parse model response as JSON", raw: contentString },
+          { status: 500 }
+        );
       }
     }
 
