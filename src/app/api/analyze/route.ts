@@ -22,8 +22,9 @@ export async function POST(req: NextRequest) {
 
     if (!OPENROUTER_API_KEY) {
       console.error("Critical: OPENROUTER_API_KEY is not set in process.env");
+      const availableKeys = Object.keys(process.env).join(", ");
       return NextResponse.json(
-        { error: "Server Configuration Error: OpenRouter API Key is missing. Please check Vercel Environment Variables." },
+        { error: `Server Configuration Error: OpenRouter API Key is missing. Available Env Vars: [${availableKeys}]` },
         { status: 500 }
       );
     }
