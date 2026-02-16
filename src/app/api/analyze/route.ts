@@ -6,7 +6,10 @@ export const maxDuration = 60; // Allow 60 seconds for processing
 export async function POST(req: NextRequest) {
   try {
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-    console.log("API Key Check:", { hasKey: !!OPENROUTER_API_KEY, length: OPENROUTER_API_KEY?.length });
+    console.log("Environment Debug:");
+    console.log("Available Keys:", Object.keys(process.env));
+    console.log("OPENROUTER_API_KEY value type:", typeof OPENROUTER_API_KEY);
+    console.log("OPENROUTER_API_KEY length:", OPENROUTER_API_KEY?.length);
 
     const { images, mode, model } = await req.json();
 
