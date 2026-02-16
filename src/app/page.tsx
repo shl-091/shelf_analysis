@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, ScanLine, ShoppingBasket, Search } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
+import { resizeImage } from "@/lib/image-utils";
 
 export default function Home() {
   const [files, setFiles] = React.useState<File[]>([]);
@@ -31,16 +32,9 @@ export default function Home() {
     setResults(null);
 
     try {
-      // Convert files to base64
+      // Resize and convert files to base64
       const base64Images = await Promise.all(
-        files.map(async (file) => {
-          return new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        })
+        files.map((file) => resizeImage(file))
       );
 
       setImageSrcs(base64Images);
@@ -55,7 +49,14 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(`Server error: ${text.slice(0, 100)}...`);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Analysis failed");
@@ -65,7 +66,7 @@ export default function Home() {
 
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(err instanceof Error ? err.message : "An unknown error occurred. Please try fewer or smaller images.");
     } finally {
       setIsAnalyzing(false);
     }
